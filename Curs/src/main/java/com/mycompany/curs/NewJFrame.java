@@ -255,11 +255,9 @@ public class NewJFrame extends javax.swing.JFrame {
     
     try {
         byte[] fileData = Files.readAllBytes(selectedFile.toPath());
-        
-        // Отправка на сервер
+
         byte[] result = sendToServer("compress", fileData, selectedFile.getName());
-        
-        // Сохранение результата
+
         String outputPath = selectedFile.getPath().replace(".docx", "_network.zip");
         Files.write(Paths.get(outputPath), result);
         
@@ -284,10 +282,9 @@ public class NewJFrame extends javax.swing.JFrame {
     try {
         byte[] fileData = Files.readAllBytes(selectedFile.toPath());
         
-        // Отправка на сервер
         byte[] result = sendToServer("decompress", fileData, selectedFile.getName());
         
-        // Сохранение результата
+
         String outputPath = selectedFile.getPath().replace(".zip", "_network.docx");
         Files.write(Paths.get(outputPath), result);
         
@@ -305,13 +302,11 @@ private byte[] sendToServer(String command, byte[] fileData, String fileName) th
          ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
          ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
         
-        // Отправляем команду и данные
         oos.writeUTF(command);
         oos.writeObject(fileData);
         oos.writeUTF(fileName);
         oos.flush();
         
-        // Для декомпрессии нужно отправить дополнительные данные
         if ("decompress".equals(command)) {
             try (ObjectInputStream fileOis = new ObjectInputStream(new ByteArrayInputStream(fileData))) {
                 @SuppressWarnings("unchecked")
@@ -324,7 +319,6 @@ private byte[] sendToServer(String command, byte[] fileData, String fileName) th
             }
         }
         
-        // Получаем результат
         byte[] result = (byte[]) ois.readObject();
         String resultFileName = ois.readUTF();
         
@@ -357,13 +351,11 @@ public static class HuffmanZipCompressor {
         }
         
         public static byte[] compressForNetwork(byte[] data) throws IOException {
-        // 1. Построение частотного словаря
         Map<Byte, Integer> frequencyMap = new HashMap<>();
         for (byte b : data) {
             frequencyMap.put(b, frequencyMap.getOrDefault(b, 0) + 1);
         }
 
-        // 2. Построение дерева Хаффмана
         PriorityQueue<HuffmanNode> pq = new PriorityQueue<>();
         for (Map.Entry<Byte, Integer> entry : frequencyMap.entrySet()) {
             pq.add(new HuffmanNode(entry.getKey(), entry.getValue()));
@@ -380,11 +372,9 @@ public static class HuffmanZipCompressor {
 
         HuffmanNode root = pq.poll();
 
-        // 3. Генерация кодов
         Map<Byte, String> huffmanCodes = new HashMap<>();
         generateCodes(root, "", huffmanCodes);
 
-        // 4. Кодирование данных
         StringBuilder encodedData = new StringBuilder();
         for (byte b : data) {
             encodedData.append(huffmanCodes.get(b));
@@ -392,7 +382,6 @@ public static class HuffmanZipCompressor {
 
         byte[] compressedBytes = convertBitStringToBytes(encodedData.toString());
 
-        // 5. Упаковка для сети
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         try (ObjectOutputStream objStream = new ObjectOutputStream(byteStream)) {
             objStream.writeUTF("HUFFMAN_v1");
@@ -535,19 +524,16 @@ public static class HuffmanZipDecompressor {
         
         public static byte[] decompressFromNetwork(byte[] networkData) throws IOException, ClassNotFoundException {
         try (ObjectInputStream objStream = new ObjectInputStream(new ByteArrayInputStream(networkData))) {
-            // 1. Проверка сигнатуры
             String signature = objStream.readUTF();
             if (!"HUFFMAN_v1".equals(signature)) {
                 throw new IOException("Неверный формат сетевых данных");
             }
             
-            // 2. Чтение метаданных
             @SuppressWarnings("unchecked")
             Map<Byte, String> huffmanCodes = (Map<Byte, String>) objStream.readObject();
             int originalSize = objStream.readInt();
             byte[] compressedBytes = objStream.readAllBytes();
             
-            // 3. Распаковка
             return decompressWithHuffman(compressedBytes, huffmanCodes, originalSize);
         }
     }
