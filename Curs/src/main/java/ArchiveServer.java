@@ -44,11 +44,9 @@ public class ArchiveServer {
                 String resultExtension;
                 
                 if ("compress".equals(command)) {
-                    // ЗАМЕНИТЕ эту строку:
                     result = NewJFrame.HuffmanZipCompressor.compressForNetwork(fileData);
                     resultExtension = ".zip";
                 } else if ("decompress".equals(command)) {
-                    // ЗАМЕНИТЕ эту строку:
                     result = NewJFrame.HuffmanZipDecompressor.decompressFromNetwork(fileData);
                     resultExtension = ".docx";
                 } else {
